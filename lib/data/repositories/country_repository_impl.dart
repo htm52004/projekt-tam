@@ -19,9 +19,6 @@ class CountryRepositoryImpl {
       } catch (_) {}
       return remoteCountries;
     } catch (remoteError) {
-      // DODANY PRINT BŁĘDÓW SIECIOWYCH:
-      print('====== BŁĄD SIECIOWY: $remoteError ======');
-
       try {
         final localCountries = await localDataSource.getCachedCountries();
         if (localCountries.isNotEmpty) {
@@ -29,6 +26,14 @@ class CountryRepositoryImpl {
         }
       } catch (_) {}
       throw Exception('Błąd pobierania z sieci: $remoteError');
+    }
+  }
+
+  Future<List<CountryModel>> searchCountries(String query) async {
+    try {
+      return await remoteDataSource.searchCountries(query);
+    } catch (e) {
+      throw Exception('Nie udało się wyszukać: $e');
     }
   }
 }
