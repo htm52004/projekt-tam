@@ -1,65 +1,42 @@
 class CountryModel {
   final String name;
-  final String flagUrl;
   final String capital;
-  final String currencyName;
-  final String language;
-  final String cca2;
+  final String flagUrl;
 
   CountryModel({
     required this.name,
-    required this.flagUrl,
     required this.capital,
-    required this.currencyName,
-    required this.language,
-    required this.cca2,
+    required this.flagUrl,
   });
 
   factory CountryModel.fromJson(Map<String, dynamic> json) {
-    final String countryName = json['name']?['common'] ?? 'Brak nazwy';
-
-    final String flag = json['flags']?['png'] ?? '';
-
-    final List<dynamic>? capitals = json['capital'];
-    final String countryCapital = (capitals != null && capitals.isNotEmpty)
-        ? capitals.first.toString()
-        : 'Brak stolicy';
-
-    String countryCurrency = 'Brak waluty';
-    final Map<String, dynamic>? currencies = json['currencies'];
-    if (currencies != null && currencies.isNotEmpty) {
-      final firstCurrencyKey = currencies.keys.first;
-      countryCurrency = currencies[firstCurrencyKey]?['name'] ?? 'Brak waluty';
+    String countryName = 'Brak nazwy';
+    if (json['name'] != null && json['name']['common'] != null) {
+      countryName = json['name']['common'].toString();
     }
 
-    String countryLanguage = 'Brak języka';
-    final Map<String, dynamic>? languages = json['languages'];
-    if (languages != null && languages.isNotEmpty) {
-      countryLanguage = languages.values.first.toString();
+    String countryCapital = 'Brak stolicy';
+    if (json['capital'] != null && json['capital'] is List && (json['capital'] as List).isNotEmpty) {
+      countryCapital = json['capital'][0].toString();
     }
 
-    final String code = json['cca2'] ?? '';
+    String flag = '';
+    if (json['flags'] != null && json['flags']['png'] != null) {
+      flag = json['flags']['png'].toString();
+    }
 
     return CountryModel(
       name: countryName,
-      flagUrl: flag,
       capital: countryCapital,
-      currencyName: countryCurrency,
-      language: countryLanguage,
-      cca2: code,
+      flagUrl: flag,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'name': {'common': name},
-      'flags': {'png': flagUrl},
       'capital': [capital],
-      'currencies': {
-        'UNKNOWN': {'name': currencyName}
-      },
-      'languages': {'unknown': language},
-      'cca2': cca2,
+      'flags': {'png': flagUrl},
     };
   }
 }
