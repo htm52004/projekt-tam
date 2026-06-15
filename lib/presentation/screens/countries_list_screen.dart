@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_analytics/firebase_analytics.dart';
+
 import '../../data/datasources/country_remote_data_source.dart';
 import '../../data/datasources/country_local_data_source.dart';
 import '../../data/repositories/country_repository_impl.dart';
 import '../../data/models/country_model.dart';
+import 'country_details_screen.dart';
 
 class CountriesListScreen extends StatefulWidget {
   const CountriesListScreen({super.key});
@@ -33,6 +36,8 @@ class _CountriesListScreenState extends State<CountriesListScreen> {
   }
 
   Future<void> _handleRefresh() async {
+    // Analytics Event 1: Manualne odświeżenie
+    await FirebaseAnalytics.instance.logEvent(name: 'manual_refresh_triggered');
     _loadCountries();
   }
 
@@ -116,12 +121,17 @@ class _CountriesListScreenState extends State<CountriesListScreen> {
                   child: ListTile(
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(4),
-                      child: Image.network(
+                      child: country.flagUrl.startsWith('http')
+                          ? Image.network(
                         country.flagUrl,
                         width: 50,
                         height: 35,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Icon(Icons.flag, size: 40),
+                      )
+                          : Text(
+                        country.flagUrl.isNotEmpty ? country.flagUrl : '🏳️',
+                        style: const TextStyle(fontSize: 32),
                       ),
                     ),
                     title: Text(
@@ -130,7 +140,21 @@ class _CountriesListScreenState extends State<CountriesListScreen> {
                     ),
                     subtitle: Text('Stolica: ${country.capital}'),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {},
+                    onTap: () async {
+                      // Analytics Event 2: Wejście w szczegóły
+                      await FirebaseAnalytics.instance.logEvent(
+                        name: 'view_country_details',
+                        parameters: {'country_name': country.name},
+                      );
+
+                      if (!mounted) return;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CountryDetailsScreen(country: country),
+                        ),
+                      );
+                    },
                   ),
                 );
               },

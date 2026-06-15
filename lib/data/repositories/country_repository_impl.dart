@@ -19,13 +19,16 @@ class CountryRepositoryImpl {
       } catch (_) {}
       return remoteCountries;
     } catch (remoteError) {
+      // DODANY PRINT BŁĘDÓW SIECIOWYCH:
+      print('====== BŁĄD SIECIOWY: $remoteError ======');
+
       try {
         final localCountries = await localDataSource.getCachedCountries();
         if (localCountries.isNotEmpty) {
           return localCountries;
         }
       } catch (_) {}
-      throw Exception('Blad pobierania z sieci: $remoteError');
+      throw Exception('Błąd pobierania z sieci: $remoteError');
     }
   }
 }

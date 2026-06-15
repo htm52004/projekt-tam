@@ -14,21 +14,25 @@ class CountryRemoteDataSourceImpl implements CountryRemoteDataSource {
   @override
   Future<List<CountryModel>> getAllCountries() async {
     try {
+      final url = 'https://api.restcountries.com/countries/v5?limit=100';
+
       final response = await client.get(
-        Uri.parse('https://restcountries.com/v3.1/all?fields=name,capital,flags'),
+        Uri.parse(url),
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Connection': 'keep-alive',
+          'Authorization': 'Bearer rc_live_e20c8b9549394d91adb151d5770e1be6',
         },
       );
 
-      if (response.statusCode == 200) {
-        final dynamic decodedData = jsonDecode(response.body);
+      final dynamic decodedData = jsonDecode(response.body);
 
-        if (decodedData is List) {
+      if (response.statusCode == 200) {
+        if (decodedData is Map<String, dynamic> && decodedData.containsKey('data')) {
+          final dataMap = decodedData['data'] as Map<String, dynamic>;
+          final objectsList = dataMap['objects'] as List<dynamic>? ?? [];
+
           final List<CountryModel> countries = [];
-          for (var item in decodedData) {
+          for (var item in objectsList) {
             if (item is Map<String, dynamic>) {
               try {
                 countries.add(CountryModel.fromJson(item));
@@ -36,20 +40,17 @@ class CountryRemoteDataSourceImpl implements CountryRemoteDataSource {
             }
           }
           return countries;
-        } else if (decodedData is Map<String, dynamic>) {
-          final errorMessage = decodedData['message'] ?? decodedData['error'] ?? 'Blad konfiguracji serwera RestCountries';
-          throw Exception(errorMessage);
         } else {
-          throw Exception('Nieoczekiwany format danych JSON');
+          throw Exception('Nieoczekiwany format danych JSON z v5');
         }
       } else {
-        try {
-          final dynamic errorBody = jsonDecode(response.body);
-          if (errorBody is Map && errorBody.containsKey('message')) {
-            throw Exception('Blad ${response.statusCode}: ${errorBody['message']}');
+        if (decodedData is Map<String, dynamic> && decodedData.containsKey('errors')) {
+          final errors = decodedData['errors'] as List<dynamic>;
+          if (errors.isNotEmpty) {
+            throw Exception(errors[0]['message']);
           }
-        } catch (_) {}
-        throw Exception('Serwer zwrocil kod bledu: ${response.statusCode}');
+        }
+        throw Exception('Serwer zwrócił kod błędu: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('REST_COUNTRIES_CRASH: $e');

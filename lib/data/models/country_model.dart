@@ -11,18 +11,36 @@ class CountryModel {
 
   factory CountryModel.fromJson(Map<String, dynamic> json) {
     String countryName = 'Brak nazwy';
-    if (json['name'] != null && json['name']['common'] != null) {
+    if (json['names'] is Map && json['names']['common'] != null) {
+      countryName = json['names']['common'].toString();
+    } else if (json['name'] is Map && json['name']['common'] != null) {
       countryName = json['name']['common'].toString();
+    } else if (json['names.common'] != null) {
+      countryName = json['names.common'].toString();
     }
 
     String countryCapital = 'Brak stolicy';
-    if (json['capital'] != null && json['capital'] is List && (json['capital'] as List).isNotEmpty) {
-      countryCapital = json['capital'][0].toString();
+    final caps = json['capitals'] ?? json['capital'];
+    if (caps is List && caps.isNotEmpty) {
+      final firstCap = caps[0];
+      if (firstCap is Map && firstCap['name'] != null) {
+        countryCapital = firstCap['name'].toString();
+      } else if (firstCap is String) {
+        countryCapital = firstCap;
+      }
+    } else if (caps is String) {
+      countryCapital = caps;
     }
 
-    String flag = '';
-    if (json['flags'] != null && json['flags']['png'] != null) {
+    String flag = '🏳️';
+    if (json['flag'] is Map && json['flag']['emoji'] != null) {
+      flag = json['flag']['emoji'].toString();
+    } else if (json['flags'] is Map && json['flags']['png'] != null) {
       flag = json['flags']['png'].toString();
+    } else if (json['flag.emoji'] != null) {
+      flag = json['flag.emoji'].toString();
+    } else if (json['flags.png'] != null) {
+      flag = json['flags.png'].toString();
     }
 
     return CountryModel(
